@@ -65,7 +65,7 @@ jobs:
       - image: circle/node:20.7.0
     working_directory: ~/repo
     steps:
-      - checkout
+      - checkout 
       - run:
         name: Show current branch
         command: echo ${CURRENT_BRANCH}
@@ -84,7 +84,7 @@ jobs:
           cd build
           zip ../build.zip -r * .[^.]*
           echo "Build successfully"
-      -run:
+      - run:
         name: Deply to AWS Cloudfront
         command: |
           aws configure set preview.cloudfront
