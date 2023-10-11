@@ -17,7 +17,6 @@ jobs:
     - run:
         name: Install dependies
         command: npm install      
-
     - save_cache:
         paths:
           - node_modules
@@ -33,7 +32,7 @@ jobs:
         name: Show current branch
         command: echo ${CURRENT_BRANCH}
       - run:
-        name: Installinh AWS CLI
+        name: Installing AWS CLI
         working_directory: /
         command: |
           sudo apt-get -y -qq update
@@ -70,7 +69,7 @@ jobs:
         name: Show current branch
         command: echo ${CURRENT_BRANCH}
       - run:
-        name: Installinh AWS CLI
+        name: Installing AWS CLI
         working_directory: /
         command: |
           sudo apt-get -y -qq update
@@ -78,7 +77,7 @@ jobs:
           sudo apt-get install -y python-pip python-dev build-essential
       - run:
         name: Build Project
-        command:
+        command: |
           npm install
           npm run build
           cd build
@@ -109,7 +108,7 @@ workflows:
               only:
                 - develop
                 - staging
-                - master          
+                - master           
       - deploy-to-aws-cloudfront:
           requires:
             - deploy-to-aws-s3
