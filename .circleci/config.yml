@@ -31,7 +31,7 @@ jobs:
       - checkout
       - run:
         name: Show current branch
-        command; echo ${CURRENT_BRANCH}
+        command: echo ${CURRENT_BRANCH}
       - run:
         name: Installinh AWS CLI
         working_directory: /
