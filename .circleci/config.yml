@@ -6,96 +6,99 @@ jobs:
       - image: circleci/node:20.7.0
     working_directory: ~/repo
     steps:
-      - checkout 
+      - checkout
       - run:
           name: Show current branch
-          command: echo ${CURRENT_BRANCH}
+          command: echo $CURRENT_BRANCH
       - restore_cache:
           key:
-            - app-{{ checksum "package,json" }}
+            - app-{{ checksum "package.json" }}
             - app-
       - run:
-          name: Install dependies
-          command: npm install      
+          name: Installing dependencies
+          command: npm install
       - save_cache:
           paths:
             - node_modules
-          key: app-{{ cheksum "package.json" }}
+          key: app-{{ checksum "package.json" }}
+
   deploy-to-aws-s3:
     docker:
-      - image: circle/node:20.7.0
+      - image: circleci/node:20.7.0
     working_directory: ~/repo
     steps:
       - checkout
       - run:
-        name: Show current branch
-        command: echo ${CURRENT_BRANCH}
+          name: Show current branch
+          command: echo $CURRENT_BRANCH
       - run:
-        name: Installing AWS CLI
-        working_directory: /
-        command: |
-          sudo apt-get -y -qq update
-          sudo apt-get install -y awscli
-          sudo apt-get install -y python-pip python-dev build-essential
+          name: Installing AWS CLI
+          working_directory: /
+          command: |
+            sudo apt-get -y -qq update
+            sudo apt-get install -y awscli
+            sudo apt-get install -y python-pip python-dev build-essential
       - run:
-        name: Build Project
-        command:
-          npm install
-          npm run build
-          cd build
-          zip ../build.zip -r * .[^.]*
-          echo "Build successfully"
+          name: Build Project
+          command: |
+            npm install
+            npm run build
+            cd build
+            zip -r ../build.zip *
+            echo "Build successfully"
       - run:
-        name: Deply to AWS S3
-        command: |
-          if ["${CURRENT_BRANCH}" == "master" ]
-          then
-            aws--region ${AWS_REGION} s3 sync ~/repo/builds£://${AWS_BUCKET_PRODUCTION} --delete
-          elif ["${CURRENT_BRANCH}" == "staging" ]
-          then
-            aws--region ${AWS_REGION} s3 sync ~/repo/builds£://${AWS_BUCKET_STAGING} --delete
-          else
-             aws--region ${AWS_REGION} s3 sync ~/repo/builds£://${AWS_DEV_BUCKET} --delete
-          fi
-          
+          name: Deploy to AWS S3
+          command: |
+            if [ "$CURRENT_BRANCH" == "master" ]
+            then
+              aws --region $AWS_REGION s3 sync ~/repo/build s3://$AWS_BUCKET_PRODUCTION --delete
+            elif [ "$CURRENT_BRANCH" == "staging" ]
+            then
+              aws --region $AWS_REGION s3 sync ~/repo/build s3://$AWS_BUCKET_STAGING --delete
+            else
+              aws --region $AWS_REGION s3 sync ~/repo/build s3://$AWS_DEV_BUCKET --delete
+            fi
+
   deploy-to-aws-cloudfront:
     docker:
-      - image: circle/node:20.7.0
+      - image: circleci/node:20.7.0
     working_directory: ~/repo
     steps:
-      - checkout 
+      - checkout
       - run:
-        name: Show current branch
-        command: echo ${CURRENT_BRANCH}
+          name: Show current branch
+          command: echo $CURRENT_BRANCH
       - run:
-        name: Installing AWS CLI
-        working_directory: /
-        command: |
-          sudo apt-get -y -qq update
-          sudo apt-get install -y awscli
-          sudo apt-get install -y python-pip python-dev build-essential
+          name: Installing AWS CLI
+          working_directory: /
+          command: |
+            sudo apt-get -y -qq update
+            sudo apt-get install -y awscli
+            sudo apt-get install -y python-pip python-dev build-essential
       - run:
-        name: Build Project
-        command: |
-          npm install
-          npm run build
-          cd build
-          zip ../build.zip -r * .[^.]*
-          echo "Build successfully"
+          name: Build Project
+          command: |
+            npm install
+            npm run build
+            cd build
+            zip -r ../build.zip *
+            echo "Build successfully"
       - run:
-        name: Deply to AWS Cloudfront
-        command: |
-          aws configure set preview.cloudfront
-          if ["${CURRENT_BRANCH}" == "master" ]
-          then
-            aws cloudfront create-invalidation --distribution-id ${PRODUCTION_DISTRIBUTION_ID} --paths ? /\*
-          elif ["${CURRENT_BRANCH}" == "staging" ]
-          then
-            aws cloudfront create-invalidation --distribution-id ${STAGING_DISTRIBUTION_ID} --paths ? /\*
-          else
-             aws cloudfront create-invalidation --distribution-id ${DEV_DISTRIBUTION_ID} --paths ? /\*
-          fi
+          name: Deploy to AWS CloudFront
+          command: |
+            aws configure set preview.cloudfront true
+            if [ "$CURRENT_BRANCH" == "master" ]
+            then
+              aws cloudfront create-invalidation --distribution-id $PRODUCTION_DISTRIBUTION_ID --paths '/*'
+            elif [ "$CURRENT_BRANCH" == "staging" ]
+            then
+              aws cloudfront create-invalidation --distribution-id $STAGING_DISTRIBUTION_ID --paths '/*'
+            else
+              aws cloudfront create-invalidation --distribution-id $DEV_DISTRIBUTION_ID --paths '/*'
+            fi
+
 workflows:
+  version: 2
   build_and_deploy:
     jobs:
       - build
@@ -107,7 +110,7 @@ workflows:
               only:
                 - develop
                 - staging
-                - master           
+                - master
       - deploy-to-aws-cloudfront:
           requires:
             - deploy-to-aws-s3
@@ -117,4 +120,3 @@ workflows:
                 - develop
                 - staging
                 - master
-               
