@@ -6,7 +6,7 @@ jobs:
     - image: circleci/node:20.7.0
   working_directory: ~/repo
   steps:
-    - checkout
+    - checkout 
     - run:
         name: Show current branch
         command: echo ${CURRENT_BRANCH}
