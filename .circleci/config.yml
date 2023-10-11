@@ -11,7 +11,9 @@ jobs:
           name: Show current branch
           command: echo $CURRENT_BRANCH
       - restore_cache:
-          key: app-{{ checksum "package.json" }}
+          keys:
+            - app-{{ checksum "package.json" }}
+            - app-
       - run:
           name: Installing dependencies
           command: npm install
