@@ -13,7 +13,6 @@ jobs:
       - restore_cache:
           key:
             - app-{{ checksum "package.json" }}
-            - app-
       - run:
           name: Installing dependencies
           command: npm install
