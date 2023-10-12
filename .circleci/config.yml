@@ -126,15 +126,15 @@ workflows:
                 - develop
                 - staging
                 - master
-        - prettier:
-          requires:
-            - build
-          filters:
-            branches:
-              only:
-                - develop
-                - staging
-                - master
+      - prettier:
+        requires:
+          - build
+        filters:
+          branches:
+            only:
+              - develop
+              - staging
+              - master
       - deploy-to-aws-s3:
           requires:
             - prettier
