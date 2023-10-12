@@ -1,43 +1,39 @@
 version: 2.1
-
-jobs:
-  build:
+executors:
+  app-executor:
     docker:
       - image: circleci/node
     working_directory: ~/repo
-    steps:
-      - checkout
-      - run:
+
+aliases:
+  - &show-current-branch-name
+    run:
           name: Show current branch
           command: echo $CIRCLE_BRANCH
-      - restore_cache:
+  - &restore-cache
+    restore_cache:
           keys:
             - app-{{ checksum "package.json" }}
             - app-
-      - run:
+  - &install-dependencies
+    run:
           name: Installing dependencies
           command: npm install
-      - save_cache:
+  - &save-cache
+    save_cache:
           paths:
             - node_modules
           key: app-{{ checksum "package.json" }}
-  deploy-to-aws-s3:
-    docker:
-      - image: circleci/node
-    working_directory: ~/repo
-    steps:
-      - checkout
-      - run:
-          name: Show current branch
-          command: echo $CIRCLE_BRANCH
-      - run:
-          name: Installing AWS CLI
-          working_directory: /
-          command: |
-            sudo apt-get -y -qq update
-            sudo apt-get install -y awscli
-            sudo apt-get install -y python3-pip python-dev build-essential
-      - run:
+  - &install-aws-cli
+    run:
+      name: Installing AWS CLI
+      working_directory: /
+      command: |
+        sudo apt-get -y -qq update
+        sudo apt-get install -y awscli
+        sudo apt-get install -y python3-pip python-dev build-essential
+  - &build-project
+    run:
           name: Build Project
           command: |
             npm install
@@ -45,6 +41,34 @@ jobs:
             cd build
             zip -r ../build.zip *
             echo "Build successfully"
+
+jobs:
+  build:
+    executor: app-executor
+    steps:
+      - checkout
+      - *show-current-branch-name
+      - *restore-cache
+      - *install-dependencies
+      - *save-cache
+  
+  linting:
+    executor: app-executor
+    steps:
+      - checkout
+      - *show-current-branch-name
+      - *restore-cache
+      - run:
+          name: Run Linting
+          command: npm run lint
+
+  deploy-to-aws-s3:
+    executor: app-executor
+    steps:
+      - checkout
+      - *show-current-branch-name
+      - *install-aws-cli
+      - *build-project 
       - run:
           name: Deploy to AWS S3
           command: |
@@ -59,29 +83,12 @@ jobs:
             fi
 
   deploy-to-aws-cloudfront:
-    docker:
-      - image: circleci/node
-    working_directory: ~/repo
+    executor: app-executor
     steps:
       - checkout
-      - run:
-          name: Show current branch
-          command: echo $CIRCLE_BRANCH
-      - run:
-          name: Installing AWS CLI
-          working_directory: /
-          command: |
-            sudo apt-get -y -qq update
-            sudo apt-get install -y awscli
-            sudo apt-get install -y python3-pip python-dev build-essential
-      - run:
-          name: Build Project
-          command: |
-            npm install
-            npm run build
-            cd build
-            zip -r ../build.zip *
-            echo "Build successfully"
+      - *show-current-branch-name
+      - *install-aws-cli
+      - *build-project 
       - run:
           name: Deploy to AWS CloudFront
           command: |
@@ -101,9 +108,18 @@ workflows:
   build_and_deploy:
     jobs:
       - build
-      - deploy-to-aws-s3:
+      - linting:
           requires:
             - build
+          filters:
+            branches:
+              only:
+                - develop
+                - staging
+                - master
+      - deploy-to-aws-s3:
+          requires:
+            - linting
           filters:
             branches:
               only:
