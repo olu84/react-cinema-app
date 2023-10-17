@@ -104,7 +104,7 @@ jobs:
             terraform validate
             terraform fmt -check
 
-  terraform-plan-apply:
+  terraform-plan-and-apply:
     executor: terraform-executor
     steps:
       - checkout
