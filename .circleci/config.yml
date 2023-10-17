@@ -11,7 +11,8 @@ executors:
       - image: 'cimg/base:stable'
     resource_class: small
   terraform-executor:
-    - image: hashicorp/terraform:0.14.3
+    docker:
+      - image: hashicorp/terraform:0.14.3
 
 aliases:
   - &show-current-branch-name
