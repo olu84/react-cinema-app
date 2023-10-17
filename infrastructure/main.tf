@@ -1,6 +1,5 @@
 provider "aws" {
-  region  = "eu-west-2"
-  profile = "cinema"
+  region = "eu-west-2"
 
 }
 
