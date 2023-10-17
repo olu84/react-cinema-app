@@ -14,9 +14,9 @@ resource "aws_s3_bucket_ownership_controls" "s3_bucket_acl_ownership" {
 
 
 resource "aws_s3_bucket_acl" "cinema_app_bucket_acl" {
-    bucket = aws_s3_bucket.cinema_app_s3_bucket.id
-    acl    = "private"
-    depends_on = [aws_s3_bucket_ownership_controls.s3_bucket_acl_ownership]
+  bucket     = aws_s3_bucket.cinema_app_s3_bucket.id
+  acl        = "private"
+  depends_on = [aws_s3_bucket_ownership_controls.s3_bucket_acl_ownership]
 }
 
 resource "aws_s3_bucket_public_access_block" "public_block" {
@@ -54,7 +54,7 @@ resource "aws_s3_bucket_website_configuration" "cinema_app_bucket_website" {
 
 data "aws_iam_policy_document" "bucket_policy_document" {
   statement {
-    actions = [ "s3:GetObject" ]
+    actions = ["s3:GetObject"]
 
     resources = [
       aws_s3_bucket.cinema_app_s3_bucket.arn,
